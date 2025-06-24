@@ -1,7 +1,10 @@
 <?php
 
 use App\Http\Controllers\ProfileController;
+use GuzzleHttp\Middleware;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\TareaController;
+
 
 /*
 |--------------------------------------------------------------------------
@@ -40,6 +43,14 @@ Route::middleware('is.normal', 'is.admin')->group(function () {
     });
 });
 });
+
+
+
+Route::middleware(['auth'])->group(function () {
+
+    Route::resource('tareas', TareaController::class);
+});
+
 
 
 
