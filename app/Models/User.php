@@ -50,6 +50,10 @@ class User extends Authenticatable
         return !$this->isAdmin();
     }
 
+    public function tareas(){
+        return $this->hasMany(Tarea::class);
+    }
+
 
 
 
