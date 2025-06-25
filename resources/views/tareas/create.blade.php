@@ -2,7 +2,7 @@
     <x-slot name="header">Nueva tarea</x-slot>
 
     {{-- contenedor centrado --}}
-    <div class="max-w-2xl mx-auto">   {{-- ← NUEVO --}}
+    <div class="max-w-2xl mx-auto mt-8">   {{-- ← NUEVO --}}
 
         <form method="POST"
               action="{{ route('tareas.store') }}"

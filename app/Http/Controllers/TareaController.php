@@ -24,7 +24,11 @@ class TareaController extends Controller
     /* Guardar nueva tarea */
     public function store(StoreTareaRequest $request)
     {
-        auth()->user()->tareas()->create($request->validated());
+        $data = $request->validated();
+        $data['estado'] = $data['estado'] ?? 'pendiente';
+
+        auth()->user()->tareas()->create($data);
+
         return redirect()->route('tareas.index')->with('ok', 'Tarea creada');
     }
 

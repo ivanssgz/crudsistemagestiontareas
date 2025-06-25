@@ -26,7 +26,7 @@ class StoreTareaRequest extends FormRequest
             return [
                 'titulo'      => 'required|string|max:255',
                 'descripcion' => 'nullable|string',
-                'estado' => 'required|in:pendiente,completado',
+                'estado' => 'sometimes|in:pendiente,completado',
 
             ];
         }
