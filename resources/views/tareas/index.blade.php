@@ -20,12 +20,14 @@
          class="max-w-5xl mx-auto space-y-6"
          data-initial='@json($tareas->values())'>
 
+        {{-- Flash de éxito --}}
         @if(session('ok'))
             <div class="px-4 py-3 bg-green-100 text-green-800 rounded-lg shadow">
                 {{ session('ok') }}
             </div>
         @endif
 
+        {{-- Tabla --}}
         <div class="overflow-x-auto bg-white shadow rounded-lg mt-8">
             <table class="min-w-full divide-y divide-gray-200">
                 <thead class="bg-gray-50 text-gray-600 uppercase text-sm tracking-wider">
@@ -37,33 +39,57 @@
                 </thead>
 
                 <tbody class="divide-y divide-gray-100">
-                    <tr v-for="t in tareas" :key="t.id">
-                        <td class="px-6 py-4">@{{ t.titulo }}</td>
+                    {{-- Fila principal + detalle --}}
+                    <template v-for="t in tareas" :key="t.id">
+                        {{-- Fila principal --}}
+                        <tr>
+                            <td class="px-6 py-4">@{{ t.titulo }}</td>
 
-                        {{-- Estado visual: chip verde o rojo --}}
-                        <td class="px-6 py-4">
-                            <span
-                                class="inline-flex px-2 py-1 rounded-full text-xs font-semibold"
-                                :class="t.estado === 'completado'
-                                        ? 'bg-green-100 text-green-800'
-                                        : 'bg-red-100 text-red-800'">
-                                @{{ t.estado.charAt(0).toUpperCase() + t.estado.slice(1) }}
-                            </span>
-                        </td>
+                            {{-- Chip verde / rojo --}}
+                            <td class="px-6 py-4">
+                                <button @click="cambiarEstado(t)"
+                                    class="inline-flex px-2 py-1 rounded-full text-xs font-semibold focus:outline-none"
+                                    :class="t.estado === 'completado'
+                                            ? 'bg-green-100 text-green-800 hover:bg-green-200'
+                                            : 'bg-red-100 text-red-800 hover:bg-red-200'">
+                                    @{{ t.estado.charAt(0).toUpperCase() + t.estado.slice(1) }}
+                                </button>
+                            </td>
 
-                        <td class="px-6 py-4 text-right space-x-2 whitespace-nowrap">
-                            <a :href="routeEdit(t.id)"
-                               class="text-blue-600 hover:text-blue-900 font-medium">
-                                Editar
-                            </a>
+                            <td class="px-6 py-4 text-right space-x-2 whitespace-nowrap">
+                                <button @click="toggle(t)"
+                                        class="text-indigo-600 hover:text-indigo-800 font-medium">
+                                    Ver
+                                </button>
 
-                            <button @click="borrar(t)"
-                                    class="text-red-600 hover:text-red-800 font-medium">
-                                Borrar
-                            </button>
-                        </td>
-                    </tr>
+                                <a :href="routeEdit(t.id)"
+                                   class="text-blue-600 hover:text-blue-900 font-medium">
+                                    Editar
+                                </a>
 
+                                <button @click="borrar(t)"
+                                        class="text-red-600 hover:text-red-800 font-medium">
+                                    Borrar
+                                </button>
+                            </td>
+                        </tr>
+
+                        {{-- Fila detalle (se muestra sólo cuando t.show) --}}
+                        <tr v-if="t.show">
+                            <td colspan="3" class="bg-gray-50 px-10 py-4 text-sm text-gray-700">
+                                <p class="mb-2">
+                                    <strong>Descripción:</strong>
+                                    @{{ t.descripcion || '—' }}
+                                </p>
+                                <p class="text-xs text-gray-500">
+                                    Creado: @{{ t.created_at }} &nbsp;·&nbsp;
+                                    Actualizado: @{{ t.updated_at }}
+                                </p>
+                            </td>
+                        </tr>
+                    </template>
+
+                    {{-- Sin tareas --}}
                     <tr v-if="!tareas.length">
                         <td colspan="3" class="px-6 py-8 text-center text-gray-500">
                             ¡No tienes tareas todavía!

@@ -54,16 +54,21 @@ Route::middleware(['auth'])->group(function () {
 
 Route::middleware('auth')->group(function () {
 
-    // 1️⃣  Ruta JSON (primero)
+    // Ruta JSON (primero)
     Route::get('/tareas/stats', function () {
         $u = auth()->user();
         return [
             'pendiente'  => $u->tareas()->where('estado','pendiente')->count(),
             'completado' => $u->tareas()->where('estado','completado')->count(),
+
+            'pendientes'  => $u->tareas()
+                                ->where('estado', 'pendiente')
+                                ->orderByDesc('created_at')
+                                ->get(['id', 'titulo']),
         ];
     })->name('tareas.stats');
 
-    // 2️⃣  CRUD
+    //  CRUD
     Route::resource('tareas', TareaController::class)
         ->whereNumber('tarea');
 });

@@ -4,8 +4,8 @@
 document.addEventListener('DOMContentLoaded', () => {
     // Axios ya está cargado en app.blade.php; aquí añadimos un “toast” simple.
     window.toast = (msg, type = 'success') => {
-        // Si tienes SweetAlert2:  Swal.fire(msg, '', type);
-        alert(msg); // reemplázalo cuando instales Swal o cualquier otra lib.
+        // SweetAlert2:  Swal.fire(msg, '', type);
+        alert(msg); // 
     };
 
     initCreate();
@@ -80,7 +80,7 @@ function initCreate () {
 /* --------------------------------------------------------------------------
  * 3. VISTA: EDITAR TAREA
  * ------------------------------------------------------------------------ */
-function initEdit() {
+function initEdit () {
   const el = document.getElementById('tarea-edit');
   if (!el) return;
 
@@ -92,30 +92,27 @@ function initEdit() {
     data: {
       loading: false,
       form: {
-        titulo:       initial.titulo      || '',
-        descripcion:  initial.descripcion || '',
-        estado:       initial.estado      || 'pendiente'
+        titulo:      initial.titulo      || '',
+        descripcion: initial.descripcion || '',
+        estado:      initial.estado      || 'pendiente'
       }
     },
+
+  
     template: `
       <form @submit.prevent="update" class="space-y-6">
         <div>
           <label class="block mb-1 font-medium">Título</label>
-          <input v-model="form.titulo" class="w-full border rounded px-3 py-2" required>
+          <input v-model="form.titulo"
+                 class="w-full border rounded px-3 py-2"
+                 required>
         </div>
 
         <div>
           <label class="block mb-1 font-medium">Descripción</label>
-          <textarea v-model="form.descripcion" rows="4"
+          <textarea v-model="form.descripcion"
+                    rows="4"
                     class="w-full border rounded px-3 py-2"></textarea>
-        </div>
-
-        <div>
-          <label class="block mb-1 font-medium">Estado</label>
-          <select v-model="form.estado" class="border rounded px-3 py-2">
-            <option value="pendiente">Pendiente</option>
-            <option value="completado">Completado</option>
-          </select>
         </div>
 
         <button :disabled="loading"
@@ -125,17 +122,17 @@ function initEdit() {
         <a href="/tareas" class="ml-4 text-gray-600 hover:underline">Cancelar</a>
       </form>
     `,
-    methods: {
-        update () {
-            this.loading = true
-            axios.put(`/tareas/${id}`, this.form)
-                .then(() => {
-                alert('Tarea actualizada')
-                window.location.href = '/tareas'   //  ó  "{{ route('tareas.index') }}"
-                })
-                .finally(() => this.loading = false)
-        }
 
+    methods: {
+      update () {
+        this.loading = true;
+        axios.put(`/tareas/${id}`, this.form)
+             .then(() => {
+                 alert('Tarea actualizada');
+                 window.location.href = '/tareas';   // o route('tareas.index')
+             })
+             .finally(() => (this.loading = false));
+      }
     }
   });
 }
@@ -146,27 +143,35 @@ function initEdit() {
 /* --------------------------------------------------------------------------
  * 4. VISTA: LISTAR TAREAS
  * ------------------------------------------------------------------------ */
-function initIndex() {
+function initIndex () {
     const el = document.getElementById('tarea-index');
     if (!el) return;
 
-    // datos iniciales inyectados desde Blade
-    const initial = JSON.parse(el.dataset.initial || '[]');
+    /* añadimos show:false a cada tarea */
+    const initial = (JSON.parse(el.dataset.initial || '[]'))
+                    .map(t => ({ ...t, show: false }));
 
     new Vue({
         el: '#tarea-index',
-        data: {
-            tareas: initial
-        },
+        data: { tareas: initial },
+
         methods: {
-            /* PUT /tareas/{id} para cambiar el estado */
-            cambiarEstado(t) {
-                axios.put(`/tareas/${t.id}`, { ...t })
-                     .then(() => toast('Estado actualizado'))
+            toggle (t) { t.show = !t.show },
+
+            cambiarEstado (t) {
+                const nuevo = t.estado === 'pendiente'
+                              ? 'completado'
+                              : 'pendiente';
+
+                axios.put(`/tareas/${t.id}`, { ...t, estado: nuevo })
+                     .then(() => {
+                         t.estado = nuevo;          
+                         toast('Estado actualizado');
+                     })
                      .catch(() => toast('Error', 'error'));
             },
-            /* DELETE /tareas/{id} */
-            borrar(t) {
+
+            borrar (t) {
                 if (!confirm('¿Eliminar la tarea?')) return;
                 axios.delete(`/tareas/${t.id}`)
                      .then(() => {
@@ -175,83 +180,100 @@ function initIndex() {
                      })
                      .catch(() => toast('Error', 'error'));
             },
-            /* genera la URL de edición usando las rutas de Laravel */
-            routeEdit(id) {
-                return `/tareas/${id}/edit`;
-            }
+
+            routeEdit (id) { return `/tareas/${id}/edit`; }
         }
     });
 }
+
 /* -------------------  ESTADÍSTICAS  ------------------- */
 function initStats () {
     const el = document.getElementById('tarea-stats');
     if (!el) return;
 
-    const url = el.dataset.url;   // ← URL JSON
+    const url = el.dataset.url;
 
     new Vue({
         el: '#tarea-stats',
         data: { stats: null },
-        /* plantilla inline */
-template: `
-  <div v-if="stats"
-       class="bg-white shadow rounded-lg p-6 mx-auto max-w-md
-              flex flex-col items-center relative">
 
-      <h2 class="text-lg font-semibold text-gray-700 mb-4">
-          Resumen de tareas
-      </h2>
+        template: `
+          <div v-if="stats"
+               class="bg-white shadow rounded-lg p-6 mx-auto max-w-md
+                      flex flex-col items-center">
 
-      <!-- 256×256 px; siempre centrado -->
-      <canvas id="chartTareas" class="w-64 h-64"></canvas>
+              <h2 class="text-lg font-semibold text-gray-700 mb-4">
+                  Resumen de tareas
+              </h2>
 
-      <!-- leyenda manual -->
-      <div class="mt-4 flex gap-6 text-sm">
-          <span class="flex items-center gap-1">
-              <span class="inline-block w-3 h-3 rounded-full bg-red-400"></span>
-              Pendiente ({{ stats.pendiente }})
-          </span>
-          <span class="flex items-center gap-1">
-              <span class="inline-block w-3 h-3 rounded-full bg-green-400"></span>
-              Completado ({{ stats.completado }})
-          </span>
-      </div>
-  </div>
-`,
+              <!-- dona de 256×256 -->
+              <canvas id="chartTareas" class="w-64 h-64"></canvas>
+
+              <!-- leyenda -->
+              <div class="mt-4 flex gap-6 text-sm">
+                  <span class="flex items-center gap-1">
+                      <span class="inline-block w-3 h-3 rounded-full bg-red-400"></span>
+                      Pendiente ({{ stats.pendiente }})
+                  </span>
+                  <span class="flex items-center gap-1">
+                      <span class="inline-block w-3 h-3 rounded-full bg-green-400"></span>
+                      Completado ({{ stats.completado }})
+                  </span>
+              </div>
+
+              <!-- lista de pendientes -->
+              <div class="mt-6 w-full">
+                  <h3 class="text-sm font-medium text-gray-600 mb-2">
+                      Tareas pendientes
+                  </h3>
+                  <ul class="list-disc list-inside text-sm text-gray-700
+                             space-y-1 max-h-48 overflow-y-auto">
+                      <li v-for="p in stats.pendientes" :key="p.id">
+                          - {{ p.titulo }}
+                      </li>
+                  </ul>
+              </div>
+          </div>
+        `,
 
         mounted () {
             axios.get(url)
                  .then(r => {
-                     this.stats = r.data
-                     this.$nextTick(this.renderChart)   // asegura que <canvas> existe
+                     this.stats = r.data;
+                     this.$nextTick(this.renderChart);
                  })
-                 .catch(err => console.error('stats error', err))
+                 .catch(err => console.error('stats error', err));
         },
+
         methods: {
             renderChart () {
-                const ctx = document.getElementById('chartTareas').getContext('2d');
-                /* global Chart */   // Chart.js ya está en window
+                const ctx = document
+                            .getElementById('chartTareas')
+                            .getContext('2d');
+
+                /* global Chart */
                 new Chart(ctx, {
                     type: 'doughnut',
-                        data: {
+                    data: {
                         labels: ['Pendiente', 'Completado'],
-                    datasets: [{
-                    data: [this.stats.pendiente, this.stats.completado],
-                    backgroundColor: ['#f87171', '#34d399']
-                }]
-            },
-    options: {
-        responsive: false,          
-        maintainAspectRatio: false, 
-        cutout: '60%',              
-        plugins: { legend: { display: false } }
-    }
-});
-
+                        datasets: [{
+                            data: [this.stats.pendiente,
+                                   this.stats.completado],
+                            backgroundColor: ['#f87171', '#34d399']
+                        }]
+                    },
+                    options: {
+                        responsive: false,
+                        maintainAspectRatio: false,
+                        cutout: '60%',
+                        plugins: { legend: { display: false } }
+                    }
+                });
             }
         }
     });
 }
+
 
 
 initCreate();
