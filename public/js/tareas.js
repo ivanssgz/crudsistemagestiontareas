@@ -182,8 +182,79 @@ function initIndex() {
         }
     });
 }
+/* -------------------  ESTADÍSTICAS  ------------------- */
+function initStats () {
+    const el = document.getElementById('tarea-stats');
+    if (!el) return;
+
+    const url = el.dataset.url;   // ← URL JSON
+
+    new Vue({
+        el: '#tarea-stats',
+        data: { stats: null },
+        /* plantilla inline */
+template: `
+  <div v-if="stats"
+       class="bg-white shadow rounded-lg p-6 mx-auto max-w-md
+              flex flex-col items-center relative">
+
+      <h2 class="text-lg font-semibold text-gray-700 mb-4">
+          Resumen de tareas
+      </h2>
+
+      <!-- 256×256 px; siempre centrado -->
+      <canvas id="chartTareas" class="w-64 h-64"></canvas>
+
+      <!-- leyenda manual -->
+      <div class="mt-4 flex gap-6 text-sm">
+          <span class="flex items-center gap-1">
+              <span class="inline-block w-3 h-3 rounded-full bg-red-400"></span>
+              Pendiente ({{ stats.pendiente }})
+          </span>
+          <span class="flex items-center gap-1">
+              <span class="inline-block w-3 h-3 rounded-full bg-green-400"></span>
+              Completado ({{ stats.completado }})
+          </span>
+      </div>
+  </div>
+`,
+
+        mounted () {
+            axios.get(url)
+                 .then(r => {
+                     this.stats = r.data
+                     this.$nextTick(this.renderChart)   // asegura que <canvas> existe
+                 })
+                 .catch(err => console.error('stats error', err))
+        },
+        methods: {
+            renderChart () {
+                const ctx = document.getElementById('chartTareas').getContext('2d');
+                /* global Chart */   // Chart.js ya está en window
+                new Chart(ctx, {
+                    type: 'doughnut',
+                        data: {
+                        labels: ['Pendiente', 'Completado'],
+                    datasets: [{
+                    data: [this.stats.pendiente, this.stats.completado],
+                    backgroundColor: ['#f87171', '#34d399']
+                }]
+            },
+    options: {
+        responsive: false,          
+        maintainAspectRatio: false, 
+        cutout: '60%',              
+        plugins: { legend: { display: false } }
+    }
+});
+
+            }
+        }
+    });
+}
 
 
 initCreate();
 initEdit();
 initIndex();
+initStats();

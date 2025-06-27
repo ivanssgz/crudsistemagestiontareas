@@ -36,6 +36,8 @@
     <!-- Vue 2 y Axios (sin defer, para respetar el orden de carga) -->
     <script src="https://cdn.jsdelivr.net/npm/vue@2/dist/vue.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+
 
     <!-- Token CSRF global para Axios -->
     <script>
